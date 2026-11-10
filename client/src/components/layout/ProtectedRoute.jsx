@@ -18,7 +18,9 @@ export function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
+    const isAdminPath = location.pathname === '/admin' || location.pathname.startsWith('/admin/');
+    const target = isAdminPath ? '/admin/login' : '/login';
+    return <Navigate to={target} replace state={{ from: `${location.pathname}${location.search}` }} />;
   }
 
   return children;

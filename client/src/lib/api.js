@@ -2,8 +2,18 @@ import axios from 'axios';
 
 const TOKEN_KEY = 'cms_token';
 
+const resolveBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (!envUrl) return '/api';
+  let url = envUrl.trim().replace(/\/+$/, '');
+  if (!url.endsWith('/api')) {
+    url = `${url}/api`;
+  }
+  return url;
+};
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: resolveBaseUrl(),
   timeout: 45000,
   headers: { 'Content-Type': 'application/json' },
 });

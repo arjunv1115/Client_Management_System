@@ -7,6 +7,7 @@ import {
   ShieldCheck, Sparkles, User, Building2, Users, Zap,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { api, unwrap } from '../../lib/api';
 import { DEMO_USERS } from '../../lib/constants';
 import { Button, Card, Field, Input } from '../../components/ui';
 import { cn } from '../../lib/utils';
@@ -138,10 +139,13 @@ function DemoAccounts({ admin = false, onPick }) {
   );
 }
 
-function useRedirectUser() {
+function useRedirectUser(admin = false) {
   const { user } = useAuth();
   const location = useLocation();
   if (user) {
+    if (admin && !['super_admin', 'admin'].includes(user.role)) {
+      return null;
+    }
     const from = location.state?.from;
     const fallback = user.role === 'client' ? '/client-portal' : '/dashboard';
     return <Navigate to={from || fallback} replace />;
@@ -150,7 +154,7 @@ function useRedirectUser() {
 }
 
 export function LoginPage({ admin = false }) {
-  const redirect = useRedirectUser();
+  const redirect = useRedirectUser(admin);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -291,16 +295,11 @@ export function ForgotPasswordPage() {
   const submit = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || 'Request failed.');
+      const response = await api.post('/auth/forgot-password', values);
+      const payload = response.data;
       setSent(payload.data || payload);
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Request failed.');
     } finally {
       setLoading(false);
     }
@@ -349,17 +348,11 @@ export function ResetPasswordPage() {
   const submit = async (values) => {
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || 'Reset failed.');
+      await api.post('/auth/reset-password', values);
       toast.success('Password updated. You can sign in now.');
       navigate('/login', { replace: true });
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Reset failed.');
     } finally {
       setLoading(false);
     }
@@ -383,14 +376,11 @@ export function VerifyEmailPage() {
   const [sent, setSent] = useState(false);
   const resend = async () => {
     try {
-      await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('cms_token')}` },
-      });
+      await api.post('/auth/resend-verification');
       setSent(true);
       toast.success('Verification instructions requested.');
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Could not send verification.');
     }
   };
   return (

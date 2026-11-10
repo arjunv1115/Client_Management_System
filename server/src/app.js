@@ -32,6 +32,7 @@ app.set('trust proxy', 1);
 
 const allowedOrigins = new Set([
   config.clientUrl,
+  'https://client-management-system-lac.vercel.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:4173',
@@ -44,7 +45,9 @@ app.use(helmet({
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin) || !config.isProduction) return callback(null, true);
+    if (!origin || allowedOrigins.has(origin) || origin.endsWith('.vercel.app') || !config.isProduction) {
+      return callback(null, true);
+    }
     return callback(new Error('Origin not allowed by CORS.'));
   },
   credentials: true,
@@ -105,6 +108,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/auth', authLimiter, authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/revenue', revenueRouter);
 app.use('/api/notifications', notificationRoutes);

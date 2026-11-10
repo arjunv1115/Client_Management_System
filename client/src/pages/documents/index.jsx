@@ -16,7 +16,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useAiInsight, useModuleStats, useResource, useResourceActions, useUpload } from '../../lib/hooks';
 import { useLookups } from '../../lib/lookups';
 import { useAuth } from '../../contexts/AuthContext';
-import { absoluteUrl } from '../../lib/api';
+import { absoluteUrl, api, unwrap } from '../../lib/api';
 import { cn, currency, formatDate, formatDateTime, statusTone, timeAgo } from '../../lib/utils';
 
 const CATEGORIES = [
@@ -270,14 +270,7 @@ function QuotationBuilder({ open, onClose }) {
   const generate = useAiInsight({ url: '/ai/quotation' });
   const save = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/ai/quotation/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('cms_token')}` },
-        body: JSON.stringify({ approved: true, draft: draft.draft }),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.message || 'Could not save quotation.');
-      return payload.data;
+      return unwrap(await api.post('/ai/quotation/save', { approved: true, draft: draft.draft }));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['resource', 'quotations'] });

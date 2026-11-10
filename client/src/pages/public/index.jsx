@@ -513,7 +513,6 @@ export function LandingPage() {
             <a href="#pricing" className="hover:text-ink">Pricing</a>
           </nav>
           <div className="flex items-center gap-2">
-            <Link to="/admin/login" className="hidden text-xs font-semibold text-muted hover:text-ink sm:block">Admin</Link>
             <Link to="/login" className="btn-primary btn-sm">Sign in</Link>
           </div>
         </div>
@@ -689,7 +688,6 @@ export function LandingPage() {
           <p>© {new Date().getFullYear()} PixelForge Client OS. Local demo.</p>
           <div className="flex items-center gap-4">
             <Link to="/login" className="hover:text-ink">Client sign in</Link>
-            <Link to="/admin/login" className="hover:text-ink">Admin sign in</Link>
             <Link to="/help" className="hover:text-ink">Help</Link>
           </div>
         </div>
