@@ -13,10 +13,29 @@ export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
   const { setTheme } = useTheme();
 
-  const hydrate = useCallback((payload) => {
-    setUser(payload.user);
+  const hydrate = useCallback((payload, sessionMode) => {
+    let currentUser = payload.user;
+    if (currentUser) {
+      const mode = sessionMode || localStorage.getItem('cms_login_mode') || 'user';
+      if (mode === 'user' && currentUser.role !== 'client') {
+        currentUser = {
+          ...currentUser,
+          role: 'user',
+          role_label: 'User',
+          designation: 'User',
+        };
+      } else if (mode === 'admin') {
+        currentUser = {
+          ...currentUser,
+          role: currentUser.role === 'super_admin' ? 'super_admin' : 'admin',
+          role_label: currentUser.role === 'super_admin' ? 'Super Admin' : 'Admin',
+          designation: currentUser.designation && currentUser.designation !== 'User' ? currentUser.designation : 'Administrator',
+        };
+      }
+    }
+    setUser(currentUser);
     setUsage(payload.usage || null);
-    if (payload.user?.preferences?.theme) setTheme(payload.user.preferences.theme);
+    if (currentUser?.preferences?.theme) setTheme(currentUser.preferences.theme);
   }, [setTheme]);
 
   const refresh = useCallback(async () => {
@@ -32,6 +51,7 @@ export function AuthProvider({ children }) {
     } catch {
       setUser(null);
       tokenStore.clear();
+      localStorage.removeItem('cms_login_mode');
       return null;
     } finally {
       setLoading(false);
@@ -45,6 +65,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handler = (event) => {
       setUser(null);
+      tokenStore.clear();
+      localStorage.removeItem('cms_login_mode');
       queryClient.clear();
       toast.error(event.detail?.message || 'Your session expired. Please sign in again.');
     };
@@ -53,10 +75,12 @@ export function AuthProvider({ children }) {
   }, [queryClient]);
 
   const login = useCallback(async ({ email, password, admin = false }) => {
-    const response = await api.post(admin ? '/auth/admin/login' : '/auth/login', { email, password });
+    const mode = admin ? 'admin' : 'user';
+    localStorage.setItem('cms_login_mode', mode);
+    const response = await api.post(admin ? '/auth/admin/login' : '/auth/login', { email, password, role: mode });
     const payload = unwrap(response);
     tokenStore.set(payload.token);
-    hydrate(payload);
+    hydrate(payload, mode);
     queryClient.clear();
     return payload.user;
   }, [hydrate, queryClient]);
@@ -65,7 +89,7 @@ export function AuthProvider({ children }) {
     const response = await api.post('/auth/register', values);
     const payload = unwrap(response);
     tokenStore.set(payload.token);
-    hydrate(payload);
+    hydrate(payload, 'admin');
     queryClient.clear();
     return payload.user;
   }, [hydrate, queryClient]);
@@ -73,6 +97,7 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try { await api.post('/auth/logout'); } catch { /* session may already be gone */ }
     tokenStore.clear();
+    localStorage.removeItem('cms_login_mode');
     setUser(null);
     setUsage(null);
     queryClient.clear();

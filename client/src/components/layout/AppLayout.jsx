@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Bell, Check, ChevronDown, ChevronsUpDown, Command, ExternalLink, LogOut, Menu, Monitor,
-  Moon, PanelLeftClose, PanelLeftOpen, Search, Settings as SettingsIcon, Sun, User, X,
+  Moon, PanelLeftClose, PanelLeftOpen, Search, Settings as SettingsIcon, ShieldCheck, Sun, User, X,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -262,6 +262,15 @@ function UserMenu() {
       <DropdownItem icon={User} onClick={() => navigate('/settings/profile')}>My profile</DropdownItem>
       <DropdownItem icon={SettingsIcon} onClick={() => navigate('/settings')}>Settings</DropdownItem>
       <DropdownItem icon={ExternalLink} onClick={() => navigate('/plans')}>Plan & billing</DropdownItem>
+      {user?.role === 'admin' || user?.role === 'super_admin' ? (
+        <DropdownItem icon={User} onClick={async () => { await logout(); navigate('/login'); }}>
+          Sign in as User
+        </DropdownItem>
+      ) : (
+        <DropdownItem icon={ShieldCheck} onClick={async () => { await logout(); navigate('/admin/login'); }}>
+          Sign in as Administrator
+        </DropdownItem>
+      )}
       <div className="my-1 border-t border-line" />
       <DropdownItem icon={LogOut} danger onClick={async () => { await logout(); navigate('/login'); }}>
         Sign out

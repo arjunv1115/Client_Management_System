@@ -1,6 +1,6 @@
-export const ROLES = ['super_admin', 'admin', 'manager', 'team_member', 'client'];
+export const ROLES = ['super_admin', 'admin', 'manager', 'team_member', 'user', 'client'];
 export const ADMIN_ROLES = ['super_admin', 'admin'];
-export const STAFF_ROLES = ['super_admin', 'admin', 'manager', 'team_member'];
+export const STAFF_ROLES = ['super_admin', 'admin', 'manager', 'team_member', 'user'];
 export const MANAGER_ROLES = ['super_admin', 'admin', 'manager'];
 export const FINANCE_ROLES = ['super_admin', 'admin'];
 
@@ -8,7 +8,8 @@ export const ROLE_LABELS = {
   super_admin: 'Super Admin',
   admin: 'Admin',
   manager: 'Manager',
-  team_member: 'Team Member',
+  team_member: 'User',
+  user: 'User',
   client: 'Client',
 };
 
@@ -17,6 +18,7 @@ export const ROLE_LEVEL = {
   admin: 80,
   manager: 60,
   team_member: 40,
+  user: 40,
   client: 20,
 };
 

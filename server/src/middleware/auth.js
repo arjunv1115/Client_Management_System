@@ -3,8 +3,9 @@ import { config } from '../config.js';
 import { getById } from '../db/store.js';
 import { ApiError } from '../utils/http.js';
 
-export function signToken(profile) {
-  return jwt.sign({ sub: profile.id }, config.jwtSecret, { expiresIn: config.jwtExpires });
+export function signToken(profile, sessionRole) {
+  const role = sessionRole || profile.role;
+  return jwt.sign({ sub: profile.id, sessionRole: role }, config.jwtSecret, { expiresIn: config.jwtExpires });
 }
 
 export function authRequired(req, _res, next) {
@@ -19,7 +20,12 @@ export function authRequired(req, _res, next) {
     if (profile.status && profile.status !== 'active') {
       return next(new ApiError(403, 'Your account is not active. Contact your administrator.'));
     }
-    req.user = profile;
+    const role = payload.sessionRole || profile.role;
+    req.user = {
+      ...profile,
+      role,
+      designation: role === 'admin' ? (profile.designation || 'Administrator') : (role === 'user' ? 'User' : profile.designation),
+    };
     return next();
   } catch {
     return next(new ApiError(401, 'Session expired or invalid. Please sign in again.'));

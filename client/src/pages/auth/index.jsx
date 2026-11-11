@@ -112,7 +112,9 @@ function PasswordInput({ register, name, label = 'Password', placeholder = '•�
 }
 
 function DemoAccounts({ admin = false, onPick }) {
-  const users = admin ? DEMO_USERS.filter((user) => ['super_admin', 'admin'].includes(user.role)) : DEMO_USERS;
+  const users = admin
+    ? DEMO_USERS.filter((user) => ['super_admin', 'admin'].includes(user.role))
+    : DEMO_USERS.filter((user) => ['user', 'team_member', 'client'].includes(user.role));
   return (
     <div className="mt-5 rounded-xl border border-dashed border-line bg-surface2/60 p-3">
       <div className="mb-2 flex items-center justify-between">
@@ -122,7 +124,7 @@ function DemoAccounts({ admin = false, onPick }) {
       <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
         {users.map((user) => (
           <button
-            key={user.email}
+            key={`${user.role}-${user.email}`}
             type="button"
             onClick={() => onPick(user)}
             className="flex items-center justify-between gap-2 rounded-lg border border-line bg-surface px-2.5 py-2 text-left transition hover:border-primary/30 hover:bg-primary-soft/40"
@@ -143,26 +145,27 @@ function useRedirectUser(admin = false) {
   const { user } = useAuth();
   const location = useLocation();
   if (user) {
-    if (admin && !['super_admin', 'admin'].includes(user.role)) {
+    const currentMode = user.role === 'admin' || user.role === 'super_admin' ? 'admin' : 'user';
+    const targetMode = admin ? 'admin' : 'user';
+    if (currentMode !== targetMode) {
       return null;
     }
     const from = location.state?.from;
-    const fallback = user.role === 'client' ? '/client-portal' : '/dashboard';
+    const fallback = user.role === 'client' ? '/client-portal' : (targetMode === 'admin' ? '/admin' : '/dashboard');
     return <Navigate to={from || fallback} replace />;
   }
   return null;
 }
 
-export function LoginPage({ admin = false }) {
-  const redirect = useRedirectUser(admin);
+export function LoginPage({ admin: adminProp = false }) {
+  const location = useLocation();
+  const isAdminPath = adminProp || location.pathname.startsWith('/admin') || location.search.includes('role=admin');
+  const redirect = useRedirectUser(isAdminPath);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [error, setError] = useState('');
   const { register, handleSubmit, setValue, formState: { isSubmitting } } = useForm({
-    defaultValues: admin
-      ? { email: 'admin@cms.dev', password: 'Admin@123' }
-      : { email: 'admin@cms.dev', password: 'Admin@123' },
+    defaultValues: { email: 'varjunarjun9@gmail.com', password: 'Arjun@123' },
   });
 
   if (redirect) return redirect;
@@ -170,8 +173,8 @@ export function LoginPage({ admin = false }) {
   const submit = async (values) => {
     setError('');
     try {
-      const user = await login({ ...values, admin });
-      toast.success(`Welcome back, ${user.name.split(' ')[0]}.`);
+      const user = await login({ ...values, admin: isAdminPath });
+      toast.success(`Welcome back${isAdminPath ? ' Administrator' : ''}, ${user.name.split(' ')[0]}.`);
       const from = location.state?.from;
       navigate(from || (user.role === 'client' ? '/client-portal' : '/dashboard'), { replace: true });
     } catch (err) {
@@ -181,25 +184,25 @@ export function LoginPage({ admin = false }) {
 
   return (
     <AuthShell
-      title={admin ? 'Administrator sign in' : 'Welcome back'}
-      subtitle={admin ? 'Restricted to Admin and Super Admin roles.' : 'Sign in to your workspace to pick up where you left off.'}
+      title={isAdminPath ? 'Administrator sign in' : 'User sign in'}
+      subtitle={isAdminPath ? 'Restricted to Admin and Super Admin roles.' : 'Sign in to your user workspace to pick up where you left off.'}
       footer={(
         <>
-          {admin ? (
+          {isAdminPath ? (
             <span>Not an administrator? <Link to="/login" className="font-semibold text-primary hover:underline">Use user login</Link></span>
           ) : (
             <span>New here? <Link to="/register" className="font-semibold text-primary hover:underline">Create a workspace</Link></span>
           )}
           <span className="mt-2 block text-xs">
-            {admin ? <Link to="/login" className="text-muted hover:text-ink">← Standard sign in</Link> : <Link to="/admin/login" className="inline-flex items-center gap-1 text-muted hover:text-ink"><ShieldCheck className="h-3 w-3" /> Administrator login</Link>}
+            {isAdminPath ? <Link to="/login" className="text-muted hover:text-ink">← Standard user sign in</Link> : <Link to="/admin/login" className="inline-flex items-center gap-1 text-muted hover:text-ink"><ShieldCheck className="h-3 w-3" /> Administrator login (/admin)</Link>}
           </span>
         </>
       )}
     >
-      {admin ? (
+      {isAdminPath ? (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary-soft/50 p-3 text-xs text-primary">
           <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-          <span>Admin sign-in is checked on the server. Team members and clients cannot use this route.</span>
+          <span>Admin sign-in grants Administrator role and access. Regular users should use standard login.</span>
         </div>
       ) : null}
 
@@ -221,13 +224,13 @@ export function LoginPage({ admin = false }) {
           <Link to="/forgot-password" className="text-xs font-semibold text-primary hover:underline">Forgot password?</Link>
         </div>
         <Button type="submit" size="lg" className="w-full" loading={isSubmitting}>
-          {admin ? <ShieldCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
-          {admin ? 'Sign in to admin' : 'Sign in'}
+          {isAdminPath ? <ShieldCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+          {isAdminPath ? 'Sign in as Administrator' : 'Sign in as User'}
         </Button>
       </form>
 
       <DemoAccounts
-        admin={admin}
+        admin={isAdminPath}
         onPick={(user) => {
           setValue('email', user.email);
           setValue('password', user.password);
@@ -403,12 +406,20 @@ export function VerifyEmailPage() {
 }
 
 export function UnauthorizedPage() {
+  const { user } = useAuth();
   return (
-    <AuthShell title="Access restricted" subtitle="Your role does not include permission for that area." footer={<Link to="/dashboard" className="font-semibold text-primary hover:underline">← Back to dashboard</Link>} compact>
+    <AuthShell title="Access restricted" subtitle="Your current role does not include permission for that area." footer={<Link to="/dashboard" className="font-semibold text-primary hover:underline">← Back to dashboard</Link>} compact>
       <div className="rounded-xl border border-warning/25 bg-warning/5 p-5 text-center">
         <ShieldCheck className="mx-auto h-8 w-8 text-warning" />
-        <p className="mt-3 text-sm font-semibold text-ink">Server-side authorization is enforced</p>
-        <p className="mt-1 text-xs text-muted">If you believe you should have access, ask an administrator to update your role permissions.</p>
+        <p className="mt-3 text-sm font-semibold text-ink">Administrator access required</p>
+        <p className="mt-1 text-xs text-muted">
+          You are currently signed in as {user?.role_label || 'User'}. To access admin pages, sign in via the administrator path (/admin).
+        </p>
+        <div className="mt-4">
+          <Link to="/admin/login" className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:brightness-110">
+            <ShieldCheck className="h-3.5 w-3.5" /> Sign in as Administrator
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );

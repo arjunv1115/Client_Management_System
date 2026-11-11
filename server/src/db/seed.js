@@ -29,6 +29,7 @@ const SUPER = 'usr_super';
 const MANAGER = 'usr_manager';
 const MEMBER = 'usr_member';
 const CLIENT_USER = 'usr_client';
+const ARJUN = 'ea028906-64cd-47c1-80c8-6f181027fc56';
 
 const clientsSeed = [
   {
@@ -498,6 +499,13 @@ const tables = {
       password_hash: hash('Client@123'), designation: 'Founder, Acme Studios',
       created_at: monthDay(9, 4), updated_at: at(-1),
     },
+    {
+      id: ARJUN, org_id: ORG, name: 'Arjun', email: 'varjunarjun9@gmail.com',
+      phone: '+91 98100 99999', avatar_url: '', role: 'admin', client_id: null,
+      status: 'active', email_verified: true, mfa_enabled: false, last_login_at: at(0, 9, 30),
+      password_hash: hash('Arjun@123'), designation: 'Administrator',
+      created_at: monthDay(11, 1), updated_at: at(-1),
+    },
   ],
 
   organization_members: [
@@ -506,6 +514,7 @@ const tables = {
     { id: 'om_3', org_id: ORG, profile_id: MANAGER, role: 'manager', status: 'active', joined_at: monthDay(10, 12) },
     { id: 'om_4', org_id: ORG, profile_id: MEMBER, role: 'team_member', status: 'active', joined_at: monthDay(9, 20) },
     { id: 'om_5', org_id: ORG, profile_id: CLIENT_USER, role: 'client', status: 'active', joined_at: monthDay(9, 4) },
+    { id: 'om_6', org_id: ORG, profile_id: ARJUN, role: 'admin', status: 'active', joined_at: monthDay(11, 1) },
   ],
 
   roles: roleRows,

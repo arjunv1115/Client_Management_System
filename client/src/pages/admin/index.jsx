@@ -22,7 +22,8 @@ const ROLE_LABELS = {
   super_admin: 'Super Admin',
   admin: 'Admin',
   manager: 'Manager',
-  team_member: 'Team Member',
+  team_member: 'User',
+  user: 'User',
   client: 'Client',
 };
 const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({ value, label }));

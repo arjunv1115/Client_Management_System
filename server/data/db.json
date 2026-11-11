@@ -142,7 +142,7 @@
         "email_verified": false,
         "mfa_enabled": false,
         "last_login_at": "2026-11-10T05:35:56.932Z",
-        "password_hash": "$2a$10$UOYjoq/PZPDVdq4SePmx8O/cpv0M513pOox9B7hW3Kk5cVI47iiCm",
+        "password_hash": "$2a$10$gqT0bq5JjPOyOQpz7fIPsOKAyCxUTds4/SZ5NbK6hN9tA/1cB/J3a",
         "designation": "Administrator"
       }
     ],

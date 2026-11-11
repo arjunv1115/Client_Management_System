@@ -225,13 +225,13 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user) return;
-    setProfileForm((current) => current || {
+    setProfileForm({
       name: user.name || '',
       phone: user.phone || '',
-      designation: user.designation || '',
+      designation: user.role === 'user' ? 'User' : (user.designation || 'Administrator'),
       avatar_url: user.avatar_url || '',
     });
-  }, [user]);
+  }, [user?.id, user?.role, user?.designation]);
 
   useEffect(() => {
     const result = searchParams.get('google');
